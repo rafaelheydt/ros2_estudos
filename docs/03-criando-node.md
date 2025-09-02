@@ -1,9 +1,9 @@
-# 03 - Criando Primeiros Pacotes ROS 2
+# 03 - Criando Primeiros Nodes ROS 2
 
 Neste capítulo vamos criar dois pacotes de exemplo:
 
-- **Python** (`my_py_pkg`)
-- **C++** (`my_cpp_pkg`)
+* **Python** (`my_py_pkg`)
+* **C++** (`my_cpp_pkg`)
 
 Ambos terão um nó simples que imprime "Hello World!" periodicamente.
 
@@ -19,7 +19,8 @@ ros2 pkg create --build-type ament_python my_py_pkg --dependencies rclpy
 ```
 
 Isso gera a seguinte estrutura:
-```bash
+
+```
 my_py_pkg/
 ├── package.xml
 ├── setup.cfg
@@ -30,12 +31,11 @@ my_py_pkg/
 └── test/
 ```
 
-## 2 Criando um Nó em Python
+---
 
-Agora vamos criar nosso **primeiro nó em Python** no ROS 2.  
-Esse nó será bem simples: um contador que imprime mensagens no terminal a cada 1 segundo.  
+## 2. Criando um Nó em Python
 
-### Código do nó em Python
+Crie o arquivo `my_py_pkg/my_first_node.py` com o seguinte conteúdo:
 
 ```python
 #!/usr/bin/env python3
@@ -83,13 +83,12 @@ def main(args=None):
 if __name__ == "__main__":
     main()
 ```
-### Arquivo `setup.py`
 
-Para que o ROS 2 reconheça e instale nosso pacote Python, precisamos criar um arquivo chamado **`setup.py`** dentro da pasta do pacote (`my_py_pkg/`).  
+---
 
-Esse arquivo segue o padrão do **setuptools**, e informa ao ROS 2 quais scripts devem ser executáveis.  
+## 3. Arquivo `setup.py`
 
-Exemplo de `setup.py`:
+Crie `setup.py` dentro da pasta `my_py_pkg/`:
 
 ```python
 from setuptools import find_packages, setup
@@ -101,7 +100,7 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        # Necessário para que o ROS 2 encontre o pacote
+         # Necessário para que o ROS 2 encontre o pacote
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         # Inclui o package.xml
@@ -122,40 +121,173 @@ setup(
         ],
     },
 )
-
 ```
-### Compilando e executando o pacote
 
-Após criar o nó Python (`my_first_node.py`) e configurar o `setup.py`, precisamos **compilar** o workspace.
+---
 
-1. Vá até a raiz do workspace (onde está a pasta `src/`):
-   
+## 4. Compilando e executando o pacote Python
+
+1. Vá até a raiz do workspace:
+
 ```bash
 cd ~/ros2_ws
 ```
 
-2. Compile usando o colcon:
-   
+2. Compile usando o **colcon**:
+
 ```bash
 colcon build --packages-select my_py_pkg
 ```
 
 3. Carregue as configurações do workspace compilado:
-   
+
 ```bash
 source install/setup.bash
 ```
 
-4. Agora já é possível rodar o nó:
+4. Execute o nó:
 
 ```bash
 ros2 run my_py_pkg py_node
 ```
 
-Se tudo estiver correto, você verá no terminal:
-```less
+Saída esperada:
+
+```
 [INFO] [1681234567.123456789] [py_test]: Hello World !
 [INFO] [1681234568.123456789] [py_test]: Hello 0
 [INFO] [1681234569.123456789] [py_test]: Hello 1
 ...
 ```
+
+---
+
+## 5. Criando um Nó em C++ (my\_cpp\_pkg)
+
+Se ainda não criou o pacote:
+
+```bash
+cd ~/ros2_ws/src
+ros2 pkg create my_cpp_pkg --build-type ament_cmake --dependencies rclcpp
+```
+
+Estrutura gerada:
+
+```
+my_cpp_pkg/
+├── CMakeLists.txt
+├── package.xml
+├── include/
+└── src/
+```
+
+---
+
+### 5.1. Arquivo `src/cpp_node.cpp`
+
+```cpp
+// Biblioteca principal do ROS 2 em C++
+#include "rclcpp/rclcpp.hpp"
+
+// Definição de uma classe que herda de rclcpp::Node
+// Cada nó em ROS 2 é representado como uma classe/objeto
+class MyNode : public rclcpp::Node
+{
+public: 
+    // Construtor da classe
+    // O parâmetro "cpp_test" é o nome do nó no grafo do ROS 2
+    MyNode() : Node("cpp_test"), counter_(0)
+    {
+        // Exibe mensagem no terminal (log do ROS 2)
+        RCLCPP_INFO(this->get_logger(), "Hello World !");
+
+        // Cria um temporizador (timer) que dispara a cada 1 segundo
+        // e chama a função timer_callback()
+        timer_ = this->create_wall_timer(
+            std::chrono::seconds(1),   // intervalo do timer
+            std::bind(&MyNode::timer_callback, this) // função callback
+        );
+    };
+
+private:
+    // Função que será chamada periodicamente pelo timer
+    void timer_callback()
+    {
+        RCLCPP_INFO(this->get_logger(), "Hello World %d", counter_);
+        counter_++; // incrementa o contador a cada execução
+    }
+
+    // Ponteiro para o objeto Timer
+    rclcpp::TimerBase::SharedPtr timer_;
+    // Contador de execuções do callback
+    int counter_;
+};
+
+// Função principal (ponto de entrada do programa)
+int main(int argc, char **argv)
+{
+    // Inicializa o ROS 2
+    rclcpp::init(argc, argv);
+
+    // Cria o nó "MyNode" e o coloca dentro de um ponteiro inteligente (shared_ptr)
+    auto node = std::make_shared<MyNode>();
+
+    // Mantém o nó em execução (loop interno que processa callbacks)
+    rclcpp::spin(node);
+
+    // Encerra o ROS 2 quando terminar
+    rclcpp::shutdown();
+    return 0;
+}
+
+```
+
+---
+
+### 5.2. CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.5)
+project(my_cpp_pkg)
+# Padrões de compilação (opcional, mas recomendado)
+if(NOT CMAKE_CXX_STANDARD) set(CMAKE_CXX_STANDARD 17) endif()
+
+# Encontrar dependências
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+
+ # Criar executável a partir do fonte
+add_executable(cpp_node src/cpp_node.cpp)
+
+# Lincar dependências ao executável
+ament_target_dependencies(cpp_node rclcpp)
+
+# Instalar o executável para que 'ros2 run' o encontre
+install(TARGETS
+    cpp_node
+    DESTINATION lib/${PROJECT_NAME})
+
+ament_package()
+```
+
+---
+
+### 5.3. Compilando e executando o pacote C++
+
+```bash
+cd ~/ros2_ws
+colcon build --packages-select my_cpp_pkg
+source install/setup.bash
+ros2 run my_cpp_pkg cpp_node
+```
+
+Saída esperada:
+
+```
+[INFO] [<tempo>] [cpp_test]: Hello World !
+[INFO] [<tempo>] [cpp_test]: Hello World 0
+[INFO] [<tempo>] [cpp_test]: Hello World 1
+...
+```
+
+---
