@@ -1,0 +1,12 @@
+# Ignorar diretórios do ROS 2
+build/
+install/
+log/
+src/log/
+
+# Ignorar configurações do VSCode
+.vscode/
+.vscode/
+log/
+build/
+install/
