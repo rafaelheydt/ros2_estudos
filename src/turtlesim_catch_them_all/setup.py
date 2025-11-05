@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'my_py_pkg'
+package_name = 'turtlesim_catch_them_all'
 
 setup(
     name=package_name,
@@ -14,19 +14,14 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='rafael',
-    maintainer_email='rafael@todo.todo',
+    maintainer_email='rafaelheydt@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "py_node = my_py_pkg.my_first_node:main",
-            "robot_news_station = my_py_pkg.robot_news_station:main",
-            "smartphone = my_py_pkg.smartphone:main",
-            "add_two_ints_server = my_py_pkg.add_two_ints_server:main",
-            "add_two_ints_client_no_oop = my_py_pkg.add_two_ints_client_no_oop:main",
-            "add_two_ints_client = my_py_pkg.add_two_ints_client:main",
-            "hardware_status_publisher = my_py_pkg.hardware_status_publisher:main"
+            "controller = turtlesim_catch_them_all.turtle_controller:main",
+            "spawner = turtlesim_catch_them_all.turtle_spawner:main"
         ],
     },
 )

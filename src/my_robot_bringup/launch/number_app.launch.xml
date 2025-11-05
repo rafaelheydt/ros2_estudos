@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="activty02" exec = "number_publisher" name = "my_number_publisher" namespace = "/teste">
+        <remap from="/number" to="/my_number" />
+        <!-- remap from="number" to="my_number" /-->
+        <!-- param name ="number" value = "6" />
+        <param name ="timer_period" value = "1.5" /-->
+        <param from="$(find-pkg-share my_robot_bringup)/config/number_app.yml" />
+    </node>
+    <node pkg="activty02" exec = "number_counter" name = "my_number_counter">
+        <remap from="/number" to="/my_number" />
+    </node>
+</launch>

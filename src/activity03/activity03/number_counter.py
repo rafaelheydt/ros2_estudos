@@ -2,14 +2,16 @@
 import rclpy
 from rclpy.node import Node
 from example_interfaces.msg import Int64
+from example_interfaces.srv import SetBool
 
 class NumberCounterNode(Node): 
     def __init__(self):
         super().__init__("number_counter") 
-        
         self.counter_ = 0
         self.subscriber_ = self.create_subscription(Int64, "number",self.callback_count, 10)
         self.publisher_ = self.create_publisher(Int64, "number_count", 10)
+
+        self.server_ =  self.create_service(SetBool, "reset_counter", self.callback_reset_counter)
         self.get_logger().info("Number counter has been started.")
 
     def callback_count(self, msg: Int64):
@@ -17,7 +19,18 @@ class NumberCounterNode(Node):
         new_msg = Int64()
         new_msg.data = self.counter_
         self.publisher_.publish(new_msg)
-        #self.get_logger().info(msg.data)
+        # Acessar ros2 topic echo /number_count para vericiar topico de contagem
+        #self.get_logger().info(f"Contagem: {self.counter_}")
+
+    def callback_reset_counter(self, request: SetBool.Request, respose: SetBool.Response):
+        if(request.data):
+            self.counter_ = 0
+            self.get_logger().info(f"Reseted Counter Trigger -> Request: {str(request.data)}")
+            respose.success = True
+            respose.message = "Sucessfull  reset !"
+            return respose
+        
+        return respose.message("Fail reset !")
 
 def main(args=None):
     rclpy.init(args=args)
